@@ -1,39 +1,69 @@
-// Интерфейс для работы с данными товаров
-interface ProductItem {
-    id: string;             // Уникальный идентификатор
-    title: string;          // Название продукта
-    category: string;       // Тип или категория продукта
-    description: string;    // Дополнительная информация
-    price: number|null;     // Стоимость продукта
-    image: string;          // Ссылка на изображение
+// Интерфейс состояния приложения
+export interface IAppStatus {
+    catalog: ICard[]; // Список товаров
+    basket: ICard[]; // Корзина
+    preview: string | null; // Товар в режиме предпросмотра
+    delivery: IOrdersDelivery | null; // Данные доставки
+    contact: IOrdersContacts | null; // Контактные данные
+    order: IOrder | null; // Текущий заказ
 }
 
-// Интерфейс для работы с данными товаров
-interface ProductList {          
-    items: ProductItem[];       // Массив объектов ProductItem
-    preview: string | null; //id карточки, выбранной для просмотра в модальной окне
+// Интерфейс для отображения страницы
+export interface IPage {
+    counter: number; // Счетчик товаров в корзине
+    catalog: HTMLElement[]; // Список элементов каталога
+    locked: boolean; // Заблокирована ли прокрутка страницы
 }
 
-interface Cart {
-    items: ProductItem[]; // Список товаров в корзине
+// Интерфейс для описания карточки товара
+export interface ICard {
+    id: string; // Уникальный идентификатор товара
+    description: string; // Описание товара
+    image: string; // Ссылка на изображение товара
+    title: string; // Название товара
+    category: string; // Категория товара
+    price: number | null; // Цена товара
+    count?: string; // Индекс или количество товара
+    buttonText?: string; // Текст кнопки (например, "Добавить в корзину")
 }
 
-// Интерфейс для работы с заказами
-interface Order {
-    payment: string;     // Способ оплаты (наличные, онлайн)
-    email: string;       // Email покупателя
-    phone: string;       // Телефон покупателя
-    address: string;     // Адрес доставки
+// Интерфейс для данных доставки
+export interface IOrdersDelivery {
+    payment: string; // Способ оплаты
+    address: string; // Адрес доставки
 }
 
-// Данные товара, используемые в модальном окне
-type ProductInfo = Pick<ProductItem, 'title' | 'category' | 'description' | 'price' | 'image'>;
+// Интерфейс для контактных данных
+export interface IOrdersContacts {
+    email: string; // Адрес электронной почты
+    phone: string; // Номер телефона
+}
 
-// Данные товара, используемые при отображении в списке всех товаров
-type ProductListItem = Pick<ProductItem, 'title' | 'category' | 'price' | 'image'>;
+// Интерфейс для заказа, объединяющий доставку и контакты
+export interface IOrder extends IOrdersDelivery, IOrdersContacts {
+    total: number | null; // Общая сумма заказа
+    items: string[]; // Список ID товаров в заказе
+}
 
-// Данные заказа, оплата и адрес
-type PaymentAddressMethod = Pick<Order, 'payment' | 'address'>;
+// Интерфейс для успешного оформления заказа
+export interface IOrderSuccess {
+    id: string; // Уникальный идентификатор заказа
+    total: number | null; // Итоговая сумма
+}
 
-// Данные заказа, данные покупателя
-type CustomerDetails = Pick<Order, 'email' | 'phone'>;
+// Интерфейс для отображения успешного оформления заказа
+export interface ISuccess {
+    image: string; // Изображение успеха
+    title: string; // Заголовок сообщения
+    description: string; // Описание или текст сообщения
+    total: number | null; // Общая сумма
+}
+
+// Интерфейс для корзины
+export interface IBasket {
+    items: HTMLElement[]; // Список элементов корзины
+    total: number; // Общая стоимость товаров в корзине
+}
+
+// Тип ошибок для форм
+export type FormErrors = Partial<Record<keyof IOrder, string>>;
