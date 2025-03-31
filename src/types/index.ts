@@ -60,7 +60,7 @@ export interface ISuccess {
 }
 
 // Интерфейс для корзины
-export interface IBasket {
+export interface IBasket { 
     items: HTMLElement[]; // Список элементов корзины
     total: number; // Общая стоимость товаров в корзине
 }
