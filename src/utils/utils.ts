@@ -10,8 +10,11 @@ export function isEmpty(value: any): boolean {
     return value === null || value === undefined;
 }
 
-export function formatNumber(x: number, sep = ' ') {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+export function formatNumber(value: number | null | undefined): string {
+    if (value === null || value === undefined || isNaN(value)) {
+        return 'Бесценно';
+    }
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' синапсов';
 }
 
 export type SelectorCollection<T> = string | NodeListOf<Element> | T[];

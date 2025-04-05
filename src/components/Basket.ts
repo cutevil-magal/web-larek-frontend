@@ -1,50 +1,66 @@
-import { IBasket } from '../types';
 import { ensureElement, createElement, formatNumber } from '../utils/utils';
 import { Component } from "./base/Component";
 import { EventEmitter } from "./base/events";
+import { IProduct } from "../types/index";
+
+// Интерфейс для корзины
+interface CartData { 
+    items: HTMLElement[]; // Список элементов корзины
+    total: number; // Общая стоимость товаров в корзине
+    selected: string[];
+}
 
 // Класс Basket отвечает за управление функционалом корзины в приложении
-export class Basket extends Component<IBasket> {
-    protected _list: HTMLElement;
-    protected _total: HTMLElement;
-    protected _button: HTMLButtonElement;
+export class ShoppingCart extends Component<CartData> {
+    protected itemsContainer: HTMLElement;
+    protected sumElement: HTMLElement;
+    protected checkoutButton: HTMLButtonElement;
 
     constructor(container: HTMLElement, protected events: EventEmitter) {
         super(container);
 
-        this._list = ensureElement<HTMLElement>('.basket__list', this.container);
-        this._total = this.container.querySelector('.basket__price');
-        this._button = this.container.querySelector('.basket__button');
+        this.itemsContainer = ensureElement<HTMLElement>('.basket__list', this.container);
+        this.sumElement = this.container.querySelector('.basket__price');
+        this.checkoutButton = this.container.querySelector('.basket__button');
 
-        if (this._button) {
-            this._button.addEventListener('mouseup', () => {
-                events.emit('order:open')
+        if (this.checkoutButton) {
+            this.checkoutButton.addEventListener('click', () => {
+                events.emit('checkout:initiate')
             });
         };
         this.items =[];
     };
 
     // Сеттер для установки товаров в корзине
-    set items(items: HTMLElement[]) {
-        if (items.length) {
-            items.forEach((item, index) => {
-                const indexElement = item.querySelector('.basket__item-index');
-                if (indexElement) {
-                    indexElement.textContent = (index + 1).toString(); // Индекс начинается с 1
+    set items(products: HTMLElement[]) {
+        if (products.length) {
+            products.forEach((product, idx) => {
+                const positionElement = product.querySelector('.basket__item-index');
+                if (positionElement) {
+                    positionElement.textContent = `${idx + 1}`;
                 }
             });
-            this._list.replaceChildren(...items);
-            this._button.disabled = false;
+            this.itemsContainer.replaceChildren(...products);
         } else {
-            this._list.replaceChildren(createElement<HTMLParagraphElement>('p', {
-                textContent: 'Корзина пуста'
-            }));
-            this._button.disabled = true;
-        };
-    };
+            this.itemsContainer.replaceChildren(
+                createElement<HTMLParagraphElement>('p', {
+                    textContent: 'В корзине нет товаров'
+                })
+            );
+        }
+    }
 
-    // Сеттер для обновления общей стоимости корзины
-    set total(total: number) {
-        this.setText(this._total, `${formatNumber(total)} синапсов`);
-    };
+    // управляет состоянием кнопки
+    set selected(items: string[]) {
+        this.setDisabled(this.checkoutButton, !items.length);
+    }
+
+    // Обновление общей суммы
+    set sum(amount: number) {
+        this.setText(this.sumElement, formatNumber(amount));
+    }
+
+    calculateTotal(items: IProduct[]): number {
+        return items.reduce((sum, item) => sum + (item.price || 0), 0);
+    }
 };

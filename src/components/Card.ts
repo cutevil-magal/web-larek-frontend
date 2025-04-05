@@ -1,38 +1,37 @@
-import { ICard } from "../types";
+import { IProduct } from "../types";
 import { ensureElement, formatNumber} from "../utils/utils";
 import { Component } from './base/Component';
 
- const categories: { [key: string]: string } = {
+const categories: Record<string, string> = {
+    "дополнительное": "card__category_additional",
     "софт-скил": "card__category_soft",
     "хард-скил": "card__category_hard",
     "кнопка": "card__category_button",
-    "дополнительное": "card__category_additional",
     "другое": "card__category_other"
-}
+};
 
 interface ICardActions {
     onClick: (event: MouseEvent) => void;
 }
 
-export class Card extends Component<ICard> {
+export class ProductCard extends Component<IProduct> {
     protected _category: HTMLElement;
-    protected _title: HTMLElement;
     protected _image?: HTMLImageElement;
+    protected _title: HTMLElement;
     protected _description?: HTMLElement;
-    protected _button?: HTMLButtonElement;
     protected _price?: HTMLElement;
-    protected _count?: HTMLElement;
+    protected _button?: HTMLButtonElement;
 
     constructor(container: HTMLElement, actions?: ICardActions) {
         super(container);
 
         this._category = container.querySelector('.card__category')
-        this._title = ensureElement<HTMLElement>('.card__title', container);
         this._image = container.querySelector('.card__image');
-        this._button = container.querySelector('.button');
+        this._title = ensureElement<HTMLElement>('.card__title', container);
         this._description = container.querySelector('.card__text');
         this._price = ensureElement<HTMLElement>('.card__price', container);
-        this._count = container.querySelector('.basket__item-index');
+        this._button = container.querySelector('.button');
+        
 
         if (actions?.onClick) {
             if (this._button) {
@@ -47,31 +46,24 @@ export class Card extends Component<ICard> {
         this.container.dataset.id = value;
     }
 
-    get id(): string {
-        return this.container.dataset.id || '';
-    }
-
     set title(value: string) {
         this.setText(this._title, value);
-    }
-
-    get title(): string {
-        return this._title.textContent || '';
     }
 
     set image(value: string) {
         this.setImage(this._image, value, this.title);
     }
 
-    set description(value: string | string[]) {
-        if (Array.isArray(value)) {
-            this._description.replaceWith(...value.map(str => {
-                const descTemplate = this._description.cloneNode() as HTMLElement;
-                this.setText(descTemplate, str);
-                return descTemplate;
-            }));
+    set description(content: string | string[]) {
+        if (Array.isArray(content)) {
+            const fragments = content.map(text => {
+                const elem = this._description.cloneNode() as HTMLElement;
+                elem.textContent = text;
+                return elem;
+            });
+            this._description.replaceWith(...fragments);
         } else {
-            this.setText(this._description, value);
+            this.setText(this._description, content);
         }
     }
 
@@ -80,28 +72,18 @@ export class Card extends Component<ICard> {
     }
 
     set price(value: number | null) {
-        value === null ? this.setText(this._price, 'Бесценно') : this.setText(this._price, `${formatNumber(value)} синапсов`);
+        this.setText(this._price, formatNumber(value));
     }
-
-    get price(): number {
-        return Number(this._price.textContent) || null;
-    }
-
-    set index(value: string) {
-        this._count.textContent = value;
-      }
-    
-      get index(): string {
-        return this._count.textContent || '';
-      }
 
     set category(value: string) {
         this.setText(this._category, value);
-        this._category.classList.add(categories[value]);
+        this.toggleCategoryClass(value);
     }
 
-    get category() {
-        return this._category.textContent || '';
+    private toggleCategoryClass(category: string): void {
+        Object.entries(categories).forEach(([key, className]) => {
+            this._category.classList.toggle(className, key === category);
+        });
     }
 
     set buttonText(value: string) {
@@ -110,7 +92,39 @@ export class Card extends Component<ICard> {
         }
     }
 
-    setDisabled() {
-        this._button.disabled = true;
+    get id(): string {
+        return this.container.dataset.id || '';
+    }
+
+    get title(): string {
+        return this._title.textContent || '';
+    }
+
+    get price(): number {
+        return Number(this._price.textContent) || null;
+    }
+
+    get category() {
+        return this._category.textContent || '';
+    }
+
+    // метод для полной инициализации карточки
+    initCard(item: IProduct, isDetailedView: boolean = false): this {
+        this.id = item.id;
+        this.title = item.title;
+        this.image = item.image;
+        this.price = item.price;
+        this.category = item.category;
+
+        if (isDetailedView && item.description) {
+            this.description = item.description;
+        }
+
+        return this;
+    }
+
+    // Метод для обновления состояния кнопки корзины
+    updateCartButtonState(isInCart: boolean): void {
+        this.buttonText = isInCart ? 'Убрать из корзины' : 'В корзину';
     }
 }

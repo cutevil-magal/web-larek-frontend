@@ -1,103 +1,100 @@
-import { FormErrors, IAppStatus, ICard, IOrder, IOrdersContacts, IOrdersDelivery } from '../types/index';
+import { FormErrors, IAppState, IProduct, IOrder, IOrdersContacts, IOrdersDelivery } from '../types/index';
 import { Model } from './base/Model';
-import _ from "lodash";
+import { IEvents } from './base/events';
 
-export type CatalogChangeEvent = {
-    catalog: ICard[]
+export type ProductListUpdateEvent = {
+    products: IProduct[];
 };
 
-// Класс AppStatus отвечает за управление состоянием приложения, включая каталог товаров, корзину, заказ и ошибки форм.
-export class AppStatus extends Model<IAppStatus> {
-    catalog: ICard[];
-    basket: ICard[] = [];
-    order: IOrder = {
+export class ApplicationState extends Model<IAppState> {
+    productList: IProduct[] = [];
+    shoppingCart: IProduct[] = [];
+    currentOrder: IOrder = {
         payment: 'online',
         email: '',
         phone: '',
         address: '',
         total: 0,
         items: [],
-    }
-    preview: string | null;
-    formErrors: FormErrors = {}
-    
-    // Устанавливает каталог товаров и вызывает событие изменения каталога
-    setCards(items: ICard[]) {
-        this.catalog = items;
-        this.emitChanges('items:changed', {cards: this.catalog})
-    }
+    };
+    previewItemId: string | null = null;
+    validationErrors: FormErrors = {};
+    protected events!: IEvents;
 
-    // Устанавливает ID выбранного товара для предпросмотра и вызывает событие изменения предпросмотра
-    setPreview(item: ICard) {
-        this.preview = item.id;
-        this.emitChanges('preview:changed', item)
+    // Обновление списка товаров
+    updateProductList(items: IProduct[]): void {
+        this.productList = items;
+        this.emitChanges('productList:updated', { products: this.productList });
     }
 
-    // Добавляет товар в корзину, если его там нет, и вызывает события изменения корзины и счетчика товаров
-    addItemToBasket(item: ICard) {
-        this.basket.indexOf(item) < 1 ?
-        this.basket.push(item) : 
-        false;
-        this.emitChanges('basket:changed', this.basket);
-        this.emitChanges('count:changed', this.basket);
+    // Установка товара для предпросмотра
+    setProductPreview(item: IProduct): void {
+        this.previewItemId = item.id;
+        this.emitChanges('productPreview:updated', {item});
     }
 
-    // Удаляет товар из корзины и вызывает события изменения корзины и счетчика товаров
-    deleteItemFromBasket(item: ICard) {
-        this.basket = this.basket.filter(elem => elem != item);
-        this.emitChanges('basket:changed', this.basket);
-        this.emitChanges('count:changed', this.basket);
-    }
-
-    // Устанавливает данные доставки в заказ, проверяет их валидность и вызывает событие изменения доставки
-    setOrdersDelivery(field: keyof IOrdersDelivery, value: string) {
-        this.order[field] = value;
-        this.checkDeliveryValidation() ?  
-        this.events.emit('ordersDelivery:changed', this.order) : 
-        false;
-    }
-
-    // Устанавливает контактные данные в заказ, проверяет их валидность и вызывает событие изменения контактов
-    setOrdersContacts(field: keyof IOrdersContacts, value: string) {
-        this.order[field] = value;
-        this.checkContactsValidation() ?  
-        this.events.emit('ordersContacts:changed', this.order) : 
-        false;
-    }
-
-    // Проверяет валидность адреса доставки и вызывает событие изменения формы доставки
-    checkDeliveryValidation() {
-        const error: typeof this.formErrors = {};
-        const addresRegexp = /^[а-яА-ЯёЁ0-9,./\-/\s]+$/i;
-        if (!addresRegexp.test(this.order.address) || !this.order.address) {
-            error.address = 'Введите адрес в допустимом формате: буквенно-цифровой, с пробелами, запятыми, точками и тире'
-        };
-
-        this.formErrors = error;
-        this.events.emit('deliveryForm:changed', this.formErrors)
-        return Object.keys(error).length === 0;
-    }
-
-    // Проверяет валидность контактных данных
-    checkContactsValidation() {
-        const error: typeof this.formErrors = {};
-        const emailRegepx = /^[a-zA-Z0-9._]+@[a-z]+.[a-z]{2,5}$/;
-        const phoneRegexp = /^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$/;
-        if (!emailRegepx.test(this.order.email) || !this.order.email) {
-            error.email = 'Введите свой адрес электронной почты в следующем формате: email@email.com'
+    // Управление корзиной
+    manageCartItem(product: IProduct, action: 'add' | 'remove'): void {
+        if (action === 'add') {
+            if (!this.shoppingCart.includes(product)) {
+                this.shoppingCart.push(product);
+            }
+        } else {
+            this.shoppingCart = this.shoppingCart.filter(item => item !== product);
         }
-        if (!phoneRegexp.test(this.order.phone) || !this.order.phone) {
-            error.phone = 'Введите свой номер телефона в формате +7 (XXX) XXX-XX-XX'
-        }
-        this.formErrors = error;
-        this.events.emit('contactsForm:changed', this.formErrors)
-        return Object.keys(error).length === 0;
+        this.emitCartUpdates();
     }
 
-    // Очищает корзину и вызывает события изменения корзины и счетчика товаров
-    clearBasket() {
-        this.basket = [];
-        this.emitChanges('basket:changed', this.basket);
-        this.emitChanges('count:changed', this.basket)
+    // Обновление данных доставки
+    updateDeliveryInfo(field: keyof IOrdersDelivery, value: string): void {
+        (this.currentOrder as any)[field] = value;
+        if (this.validateDelivery()) {
+            this.emitChanges('deliveryInfo:updated', { order: this.currentOrder });
+        }
+    }
+
+    // Обновление контактных данных
+    updateContactInfo(field: keyof IOrdersContacts, value: string): void {
+        (this.currentOrder as any)[field] = value;
+        if (this.validateContacts()) {
+            this.emitChanges('contactInfo:updated', { order: this.currentOrder });
+        }
+    }
+
+    // Очистка корзины
+    clearCart(): void {
+        this.shoppingCart = [];
+        this.emitCartUpdates();
+    }
+
+    // Валидация доставки
+    private validateDelivery(): boolean {
+        const errors: typeof this.validationErrors = {};
+        if (!this.currentOrder.address) {
+            errors.address = 'Укажите адрес доставки';
+        }
+        this.validationErrors = errors;
+        this.events.emit('validationDelivery:errors', this.validationErrors);
+        return Object.keys(errors).length === 0;
+    }
+
+    // Валидация контактов
+    private validateContacts(): boolean {
+        const errors: typeof this.validationErrors = {};
+        if (!this.currentOrder.email) {
+            errors.email = 'Укажите email';
+        }
+        if (!this.currentOrder.phone) {
+            errors.phone = 'Укажите телефон';
+        }
+        this.validationErrors = errors;
+        this.events.emit('validationContacts:errors', this.validationErrors);
+        return Object.keys(errors).length === 0;
+    }
+
+    // Уведомления об изменении корзины
+    private emitCartUpdates(): void {
+        this.emitChanges('shoppingCart:updated', { cart: this.shoppingCart });
+        this.emitChanges('cartItemCount:changed', { count: this.shoppingCart.length });
     }
 }
