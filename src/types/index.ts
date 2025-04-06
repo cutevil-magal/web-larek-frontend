@@ -1,5 +1,5 @@
 // Интерфейс состояния приложения
-export interface IAppState {
+export interface IApplicationState {
     catalog: IProduct[];                    // Список товаров
     basket: IProduct[];                     // Корзина
     preview: string | null;                 // Товар в режиме предпросмотра
@@ -31,10 +31,13 @@ export interface IOrdersContacts {
     phone: string;      // Номер телефона
 }
 
-// Интерфейс для заказа, объединяющий доставку и контакты
-export interface IOrder extends IOrdersDelivery, IOrdersContacts {
-    total: number | null;       // Общая сумма заказа
-    items: string[];            // Список ID товаров в заказе
+// Базовый интерфейс для заказа 
+export interface IOrderForm extends IOrdersDelivery, IOrdersContacts {}
+
+// Интерфейс для полного заказа (для отправки на сервер)
+export interface IOrder extends IOrderForm {
+    items: string[];              // Список ID товаров
+    total: number;                // Общая сумма
 }
 
 // Интерфейс для успешного оформления заказа

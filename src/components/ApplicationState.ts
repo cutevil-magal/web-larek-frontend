@@ -1,4 +1,4 @@
-import { FormErrors, IAppState, IProduct, IOrder, IOrdersContacts, IOrdersDelivery } from '../types/index';
+import { FormErrors, IApplicationState, IProduct, IOrder, IOrderForm, IOrdersContacts, IOrdersDelivery } from '../types/index';
 import { Model } from './base/Model';
 import { IEvents } from './base/events';
 
@@ -6,16 +6,14 @@ export type ProductListUpdateEvent = {
     products: IProduct[];
 };
 
-export class ApplicationState extends Model<IAppState> {
+export class ApplicationState extends Model<IApplicationState> {
     productList: IProduct[] = [];
     shoppingCart: IProduct[] = [];
-    currentOrder: IOrder = {
+    currentOrder: IOrderForm = {
         payment: 'online',
         email: '',
         phone: '',
-        address: '',
-        total: 0,
-        items: [],
+        address: ''
     };
     previewItemId: string | null = null;
     validationErrors: FormErrors = {};
@@ -33,16 +31,18 @@ export class ApplicationState extends Model<IAppState> {
         this.emitChanges('productPreview:updated', {item});
     }
 
-    // Управление корзиной
     manageCartItem(product: IProduct, action: 'add' | 'remove'): void {
         if (action === 'add') {
-            if (!this.shoppingCart.includes(product)) {
+            if (!this.shoppingCart.some(p => p.id === product.id)) {
                 this.shoppingCart.push(product);
             }
         } else {
-            this.shoppingCart = this.shoppingCart.filter(item => item !== product);
+            this.shoppingCart = this.shoppingCart.filter(item => item.id !== product.id);
         }
-        this.emitCartUpdates();
+        this.emitChanges('shoppingCart:updated', { 
+            cart: this.shoppingCart,
+            count: this.shoppingCart.length 
+        });
     }
 
     // Обновление данных доставки
@@ -64,11 +64,28 @@ export class ApplicationState extends Model<IAppState> {
     // Очистка корзины
     clearCart(): void {
         this.shoppingCart = [];
-        this.emitCartUpdates();
+        this.emitChanges('shoppingCart:updated', { 
+            cart: this.shoppingCart,
+            count: 0
+        });
+    }
+
+    // Получение данных для заказа
+    getOrderData(): IOrder {
+        return {
+            ...this.currentOrder,
+            items: this.shoppingCart.map(item => item.id),
+            total: this.getTotal()
+        };
+    }
+    
+    // Подсчет общей суммы 
+    getTotal(): number {
+        return this.shoppingCart.reduce((total, item) => total + (item.price || 0), 0);
     }
 
     // Валидация доставки
-    private validateDelivery(): boolean {
+    validateDelivery(): boolean {
         const errors: typeof this.validationErrors = {};
         if (!this.currentOrder.address) {
             errors.address = 'Укажите адрес доставки';
@@ -79,7 +96,7 @@ export class ApplicationState extends Model<IAppState> {
     }
 
     // Валидация контактов
-    private validateContacts(): boolean {
+    validateContacts(): boolean {
         const errors: typeof this.validationErrors = {};
         if (!this.currentOrder.email) {
             errors.email = 'Укажите email';
@@ -90,11 +107,5 @@ export class ApplicationState extends Model<IAppState> {
         this.validationErrors = errors;
         this.events.emit('validationContacts:errors', this.validationErrors);
         return Object.keys(errors).length === 0;
-    }
-
-    // Уведомления об изменении корзины
-    private emitCartUpdates(): void {
-        this.emitChanges('shoppingCart:updated', { cart: this.shoppingCart });
-        this.emitChanges('cartItemCount:changed', { count: this.shoppingCart.length });
     }
 }

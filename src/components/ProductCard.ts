@@ -92,22 +92,6 @@ export class ProductCard extends Component<IProduct> {
         }
     }
 
-    get id(): string {
-        return this.container.dataset.id || '';
-    }
-
-    get title(): string {
-        return this._title.textContent || '';
-    }
-
-    get price(): number {
-        return Number(this._price.textContent) || null;
-    }
-
-    get category() {
-        return this._category.textContent || '';
-    }
-
     // метод для полной инициализации карточки
     initCard(item: IProduct, isDetailedView: boolean = false): this {
         this.id = item.id;
@@ -119,12 +103,16 @@ export class ProductCard extends Component<IProduct> {
         if (isDetailedView && item.description) {
             this.description = item.description;
         }
-
+       
         return this;
     }
 
     // Метод для обновления состояния кнопки корзины
-    updateCartButtonState(isInCart: boolean): void {
-        this.buttonText = isInCart ? 'Убрать из корзины' : 'В корзину';
+    updateCartButtonState(isInCart: boolean, isDisabled = false) {
+        if (isDisabled) {
+            this._button.disabled = true; // Блокируем кнопку    
+        }
+        this.buttonText = isInCart ? 'Убрать из корзины' : 'В корзину';  
     }
+
 }

@@ -4,14 +4,14 @@ import { EventEmitter } from "./base/events";
 import { IProduct } from "../types/index";
 
 // Интерфейс для корзины
-interface CartData { 
+interface IShoppingCartData { 
     items: HTMLElement[]; // Список элементов корзины
     total: number; // Общая стоимость товаров в корзине
     selected: string[];
 }
 
-// Класс Basket отвечает за управление функционалом корзины в приложении
-export class ShoppingCart extends Component<CartData> {
+// Класс отвечает за управление функционалом корзины в приложении
+export class ShoppingCart extends Component<IShoppingCartData> {
     protected itemsContainer: HTMLElement;
     protected sumElement: HTMLElement;
     protected checkoutButton: HTMLButtonElement;
@@ -58,9 +58,5 @@ export class ShoppingCart extends Component<CartData> {
     // Обновление общей суммы
     set sum(amount: number) {
         this.setText(this.sumElement, formatNumber(amount));
-    }
-
-    calculateTotal(items: IProduct[]): number {
-        return items.reduce((sum, item) => sum + (item.price || 0), 0);
     }
 };
