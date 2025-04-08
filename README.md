@@ -47,12 +47,11 @@ yarn build
 Интерфейс состояния приложения
 ```
 export interface IApplicationState {
-    catalog: IProduct[];                    // Список товаров
-    basket: IProduct[];                     // Корзина
-    preview: string | null;                 // Товар в режиме предпросмотра
-    delivery: IOrdersDelivery | null;       // Данные доставки
-    contact: IOrdersContacts | null;        // Контактные данные
-    order: IOrder | null;                   // Текущий заказ
+    productList: IProduct[];          // Список товаров 
+    shoppingCart: IProduct[];         // Корзина 
+    currentOrder: IOrderForm;         // Текущий заказ 
+    previewItemId: string | null;     // Просматриваемый товар 
+    validationErrors: FormErrors;     // Ошибки валидации
 }
 ```
 
@@ -263,11 +262,12 @@ Presenter:
 
 **Конструктор класса**
 
-`constructor(container: HTMLFormElement, events: IEvents)`  
+`constructor(container: HTMLFormElement, events: IEvents, actions: IOrdersActions)`  
 Создает экземпляр класса и инициализирует основные элементы формы доставки.
 
 - `container: HTMLFormElement` — контейнер, содержащий разметку формы.
 - `events: IEvents` — объект для обработки событий приложения.
+- `actions: IOrdersActions` — объект с обработчиком события клика.  
 
 **Поля класса**
 - `paymentButtons: Record<PaymentMethod, HTMLButtonElement>` — кнопки для выбора способа оплаты (карта или наличные).
@@ -276,7 +276,6 @@ Presenter:
 - `set address(value: string)` — задает значение адреса доставки в соответствующее поле формы.
 - `set payment(method: PaymentMethod)` - Устанавливает выбранный метод оплаты, вызывая приватный метод togglePaymentMethod.
 - `togglePaymentMethod(method: PaymentMethod): void` - Переключает активный класс кнопки оплаты в зависимости от указанного метода.
-- `setupPaymentButtons(): void` - Устанавливает обработчики событий для кнопок оплаты, которые переключают метод оплаты и отправляют событие payment:changed.
 - `setInputValue(name: string, value: string): void` - Находит элемент с заданным именем внутри контейнера и устанавливает его значение.
 ---
 
@@ -442,8 +441,6 @@ Presenter:
 - `contacts..*:change` - Обновляет контактную информацию
 - `validationDelivery:errors` - Обрабатывает ошибки валидации формы доставки.
 - `validationContacts:errors` - Обрабатывает ошибки валидации контактной формы
-- `deliveryInfo:updated` - Обновляет валидный статус формы доставки
-- `contactInfo:updated` - Обновляет валидный статус формы контактной информации.
 - `order:submit` - Открывает модальное окно с формой ввода контактной информации
 - `contacts:submit` - Отправляет заказ на сервер
 

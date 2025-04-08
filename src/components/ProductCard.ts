@@ -12,6 +12,7 @@ const categories: Record<string, string> = {
 
 interface ICardActions {
     onClick: (event: MouseEvent) => void;
+    onCartUpdate?: () => void; // Новый опциональный обработчик
 }
 
 export class ProductCard extends Component<IProduct> {
@@ -21,7 +22,7 @@ export class ProductCard extends Component<IProduct> {
     protected _description?: HTMLElement;
     protected _price?: HTMLElement;
     protected _button?: HTMLButtonElement;
-
+    
     constructor(container: HTMLElement, actions?: ICardActions) {
         super(container);
 
@@ -31,7 +32,7 @@ export class ProductCard extends Component<IProduct> {
         this._description = container.querySelector('.card__text');
         this._price = ensureElement<HTMLElement>('.card__price', container);
         this._button = container.querySelector('.button');
-        
+                
 
         if (actions?.onClick) {
             if (this._button) {

@@ -37,7 +37,7 @@ export class ApplicationState extends Model<IApplicationState> {
                 this.shoppingCart.push(product);
             }
         } else {
-            this.shoppingCart = this.shoppingCart.filter(item => item.id !== product.id);
+            this.shoppingCart = this.shoppingCart.filter(item => item.id !== product.id);  
         }
         this.emitChanges('shoppingCart:updated', { 
             cart: this.shoppingCart,
@@ -48,17 +48,13 @@ export class ApplicationState extends Model<IApplicationState> {
     // Обновление данных доставки
     updateDeliveryInfo(field: keyof IOrdersDelivery, value: string): void {
         (this.currentOrder as any)[field] = value;
-        if (this.validateDelivery()) {
-            this.emitChanges('deliveryInfo:updated', { order: this.currentOrder });
-        }
+        this.validateDelivery();
     }
 
     // Обновление контактных данных
     updateContactInfo(field: keyof IOrdersContacts, value: string): void {
         (this.currentOrder as any)[field] = value;
-        if (this.validateContacts()) {
-            this.emitChanges('contactInfo:updated', { order: this.currentOrder });
-        }
+        this.validateContacts()
     }
 
     // Очистка корзины
@@ -87,6 +83,9 @@ export class ApplicationState extends Model<IApplicationState> {
     // Валидация доставки
     validateDelivery(): boolean {
         const errors: typeof this.validationErrors = {};
+        if (!this.currentOrder.payment) {
+            errors.payment = 'Укажите способ оплаты';
+        }
         if (!this.currentOrder.address) {
             errors.address = 'Укажите адрес доставки';
         }

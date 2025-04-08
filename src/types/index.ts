@@ -1,11 +1,10 @@
 // Интерфейс состояния приложения
 export interface IApplicationState {
-    catalog: IProduct[];                    // Список товаров
-    basket: IProduct[];                     // Корзина
-    preview: string | null;                 // Товар в режиме предпросмотра
-    delivery: IOrdersDelivery | null;       // Данные доставки
-    contact: IOrdersContacts | null;        // Контактные данные
-    order: IOrder | null;                   // Текущий заказ
+    productList: IProduct[];          // Список товаров 
+    shoppingCart: IProduct[];         // Корзина 
+    currentOrder: IOrderForm;         // Текущий заказ 
+    previewItemId: string | null;     // Просматриваемый товар 
+    validationErrors: FormErrors;     // Ошибки валидации
 }
 
 // Интерфейс для описания карточки товара
