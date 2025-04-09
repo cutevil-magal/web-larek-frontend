@@ -10,11 +10,11 @@ import { ShoppingCart } from './components/ShoppingCart';
 import { ProductCard } from './components/ProductCard';
 import { LarekApi } from './components/LarekApi';
 import { OrdersContacts} from './components/OrdersContacts';
-import { OrdersDelivery, PaymentMethod} from './components/OrdersDelivery';
+import { OrdersDelivery} from './components/OrdersDelivery';
 import { Page } from './components/Page';
 import { Success } from './components/Success';
 
-import { IProduct, IOrdersContacts, IOrdersDelivery } from './types';
+import { IProduct, IOrdersContacts, IOrdersDelivery, PaymentMethod } from './types';
 
 const events = new EventEmitter();
 const api = new LarekApi(CDN_URL, API_URL);
@@ -42,11 +42,7 @@ const appState = new ApplicationState({}, events);
 const page = new Page(document.body, events);
 const modal = new Modal(ensureElement<HTMLElement>('#modal-container'), events);
 const shoppingCart = new ShoppingCart(cloneTemplate(basketContainerTemplate), events);
-const deliveryForm = new OrdersDelivery(cloneTemplate(deliveryFormTemplate), events, {
-    onClick: (event: Event) => {
-      events.emit('payment:changed', event.target)
-    }
-});
+const deliveryForm = new OrdersDelivery(cloneTemplate(deliveryFormTemplate), events);
 const contactsForm = new OrdersContacts(cloneTemplate(contactsFormTemplate), events);
 const success = new Success(cloneTemplate(successOrderTemplate), {
     onClick: () => modal.close()
@@ -149,14 +145,12 @@ events.on('checkout:initiate', () => {
 
 });
 
-events.on('payment:changed', (target: HTMLElement) => {
-    const methodName = target.getAttribute('name') as PaymentMethod;
-  
-    if (methodName && !target.classList.contains('button_alt-active')) {
-        deliveryForm.togglePaymentMethod(methodName);
-        appState.currentOrder.payment = methodName;
-        appState.validateDelivery();
-    }
+events.on('payment:changed', (event: { method: PaymentMethod }) => {
+    appState.setPaymentMethod(event.method);
+});
+
+events.on('delivery:updated', (order: IOrdersDelivery) => {
+    deliveryForm.payment = order.payment as PaymentMethod;
 });
 
 events.on(/^order\..*:change/, (data: { field: keyof IOrdersDelivery, value: string }) => {

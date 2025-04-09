@@ -1,4 +1,4 @@
-import { FormErrors, IApplicationState, IProduct, IOrder, IOrderForm, IOrdersContacts, IOrdersDelivery } from '../types/index';
+import { FormErrors, IApplicationState, IProduct, IOrder, IOrderForm, IOrdersContacts, IOrdersDelivery, PaymentMethod} from '../types/index';
 import { Model } from './base/Model';
 import { IEvents } from './base/events';
 
@@ -49,6 +49,9 @@ export class ApplicationState extends Model<IApplicationState> {
     updateDeliveryInfo(field: keyof IOrdersDelivery, value: string): void {
         (this.currentOrder as any)[field] = value;
         this.validateDelivery();
+//-------------------Добавлено---------------------------------------------------------------------
+        // this.events.emit('deliveryInfo:updated', { field, value });
+//-------------------Добавлено---------------------------------------------------------------------
     }
 
     // Обновление контактных данных
@@ -106,5 +109,10 @@ export class ApplicationState extends Model<IApplicationState> {
         this.validationErrors = errors;
         this.events.emit('validationContacts:errors', this.validationErrors);
         return Object.keys(errors).length === 0;
+    }
+    setPaymentMethod(method: PaymentMethod): void {
+        this.currentOrder.payment = method;
+        this.validateDelivery();
+        this.emitChanges('delivery:updated', this.currentOrder);
     }
 }

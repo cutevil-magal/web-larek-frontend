@@ -6,6 +6,8 @@ export interface IApplicationState {
     previewItemId: string | null;     // Просматриваемый товар 
     validationErrors: FormErrors;     // Ошибки валидации
 }
+// Тип для указания способа оплаты
+export type PaymentMethod = 'card' | 'cash';
 
 // Интерфейс для описания карточки товара
 export interface IProduct {

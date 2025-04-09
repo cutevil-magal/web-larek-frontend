@@ -1,18 +1,12 @@
-import { IOrdersDelivery} from "../types";
+import { IOrdersDelivery, PaymentMethod} from "../types";
 import { ensureElement } from "../utils/utils";
 import { Form } from "./common/Form";
 import {IEvents} from "./base/events";
 
-export type PaymentMethod = 'card' | 'cash';
-
-export interface IOrdersActions {
-    onClick: (event: MouseEvent) => void;
-}
-
 export class OrdersDelivery extends Form<IOrdersDelivery> {
     private paymentButtons: Record<PaymentMethod, HTMLButtonElement>;
 
-    constructor(container: HTMLFormElement, events: IEvents, actions: IOrdersActions) {
+    constructor(container: HTMLFormElement, events: IEvents) {
         super(container, events)
 
         this.paymentButtons = {
@@ -20,11 +14,13 @@ export class OrdersDelivery extends Form<IOrdersDelivery> {
             cash: ensureElement<HTMLButtonElement>('[name="cash"]', container)
         };
 
-        if (actions.onClick) {
-            this.paymentButtons.card.addEventListener('mouseup', actions.onClick);
-            this.paymentButtons.cash.addEventListener('mouseup', actions.onClick);
-        };
-
+        this.paymentButtons.card.addEventListener('click', () => {
+            this.events.emit('payment:changed', { method: 'card' });
+        });
+        
+        this.paymentButtons.cash.addEventListener('click', () => {
+            this.events.emit('payment:changed', { method: 'cash' });
+        });
     };
 
     set address(value: string) {

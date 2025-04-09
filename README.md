@@ -55,6 +55,11 @@ export interface IApplicationState {
 }
 ```
 
+Тип для указания способа оплаты
+```
+export type PaymentMethod = 'card' | 'cash';
+```
+
 Интерфейс для описания карточки товара
 ```
 export interface IProduct {
@@ -188,6 +193,7 @@ Presenter:
     - `updateDeliveryInfo` — обновляет данные доставки,
     - `updateContactInfo` — обновляет контактные данные.
     - `getOrderData(): IOrder` - Возвращает объект заказа с данными о товарах, общей суммой и информацией доставки.
+    - `setPaymentMethod(method: PaymentMethod): void` - обновляет способ оплаты
 - Валидация:
     - `validateDelivery` — проверяет корректность данных доставки,
     - `validateContacts` — проверяет корректность контактных данных.
@@ -436,7 +442,8 @@ Presenter:
 **Заказ**
 
 - `checkout:initiate` - Инициализирует процесс оформления заказа
-- `payment:changed` - Обрабатывает изменение способа оплаты
+- `payment:changed` - при изменении способа оплаты, обновляет данные модели
+- `delivery:updated` - при обновлении информации о доставке, обновляет отображение способа оплаты
 - `order..*:change` - Обновляет данные формы доставки
 - `contacts..*:change` - Обновляет контактную информацию
 - `validationDelivery:errors` - Обрабатывает ошибки валидации формы доставки.
